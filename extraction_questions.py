@@ -1,172 +1,509 @@
 import spacy
+from transformers import GPT2Tokenizer
 from enlever_mots_vides import nettoyage_mots_frequent
 from tokenisation_des_phrases import tokenisation_des_phrases
+from nltk.corpus import brown
+import string
+from nltk import FreqDist
+from similarity.normalized_levenshtein import NormalizedLevenshtein
+from flashtext import KeywordProcessor
 from nltk import word_tokenize
 nlp=spacy.load("fr_core_news_sm")
+fdist = FreqDist(brown.words())#compte d'un mot spécifique
+normalized_levenshtein=NormalizedLevenshtein
+class Modification:
 
-def extraction_questions(texte):
-   mots=nettoyage_mots_frequent(texte)
-   phrase=tokenisation_des_phrases(texte)
-   m=len(phrase)
-   for j in range(m):
-       sentence=(phrase[j])
-       mot=word_tokenize(sentence)
-       doc7=nlp(sentence)
-       for token1 in doc7:
-           for tok1 in doc7:
-               for toke1 in doc7:
-                   for determinant in doc7:
-                        while token1.text in mots and token1.text in mot and token1.pos_=="PROPN" and token1.dep_=="fixed" and token1.is_stop==False and tok1.pos_=="AUX" and tok1.dep_=="cop" and toke1.pos_=="NOUN" and toke1.dep_=="nmod" and toke1.is_stop==False and toke1.text in sentence and determinant.pos_=="DET" and determinant.dep_=="det":
-                            questions="qui "+tok1.text+" "+determinant.text+" "+toke1.text+"\nréponse:"+token1.text
-                            return questions
+ #trouver le nombre de fois qu'un caractère d'un mot est présent dans une ou des phrases avec comme clé la caractère et la valeur une liste des caractères trouvés #OK
+    def PhraseDeMotClesCles(MotsCles,phrases):
+        processeur_de_MotsCles=KeywordProcessor('french')
+        phrases_de_MotsCles={}
+        for mot in MotsCles:
+            mot =mot.strip()
+            phrases_de_MotsCles[mot] = []
+            processeur_de_MotsCles.add_keyword(mot)
+        for phrase in phrases:
+            MotsCles_trouves = processeur_de_MotsCles.extract_keywords(phrase)
+            for cle in MotsCles_trouves:
+                phrases_de_MotsCles[cle].append(phrase)
 
-def questions_lieu(texte):
-   mots=nettoyage_mots_frequent(texte)
-   phrase=tokenisation_des_phrases(texte)
-   m=len(phrase)
-   for j in range(m):
-    sentence=(phrase[j])
-    doc2=nlp(sentence)
-    for token2 in doc2:
-        if token2.text in mots and token2.pos_=="PROPN" and token2.dep_=="obl:mod" and token2.is_stop==False:
-            for tok2 in doc2:
-             if tok2.text in mots and tok2.pos_=="VERB" and tok2.dep_=="ROOT":
-                 for toke2 in doc2:
-                     if toke2.text in mots and toke2.pos_=="NOUN" and toke2.dep_=="nsubj:pass":
-                         for tokes2 in doc2:
-                             if tokes2.pos_=="AUX" and tokes2.dep_=="aux:pass":
-                                return "ou s'"+tokes2.text+" "+tok2.text+" "+toke2.text+" "+"?"+"\n réponse:"+token2.text#lieu propre
+        for cle in phrases_de_MotsCles.keys():
+            valeurs =phrases_de_MotsCles[cle]
+            valeurs = sorted(valeurs, key= lambda x: len(x), reverse=True)
+            phrases_de_MotsCles[cle] = valeurs
 
+        cles_supprimes = []
+        for k in phrases_de_MotsCles.keys():
+            if len(phrases_de_MotsCles[k]) == 0:
+                cles_supprimes.append(k)
+        for cle_supprime in cles_supprimes:
+            del phrases_de_MotsCles[cle_supprime]
+        return phrases_de_MotsCles
+
+
+
+        
+    #Obtenir des options #OK
        
-def nom_propre(texte):
-    mots=nettoyage_mots_frequent(texte)
+
+    #est loin
+    def comparaisonMotCles(liste_MotCles,mot_actuel,seuil):#OK
+        liste_de_score =[]
+        for MotCles in liste_MotCles:
+            liste_de_score.append(normalized_levenshtein.distance(MotCles.lower(),mot_actuel.lower()))#distance euclidienne entre MotCles et mot actuel
+        if min(liste_de_score)>=seuil:
+            return True
+        else:
+            return False
+    #Filter les phrases
+    def listeReponses(texte):
+        motsValables=nettoyage_mots_frequent(texte)
+        nom=[]
+        popr=[]
+        numero=[]
+        sortie = []
+        doc=nlp(texte)
+        for x in doc:
+            if x.pos_=="NOUN" and x.text in motsValables:
+                nom.append(x.text)
+        for y in doc:
+            if y.pos_=="PROPN" and y.text in motsValables:
+                popr.append(y.text)
+        for z in doc:
+            if z.pos_=="NUM" and z.text in motsValables:
+                numero.append(z.text)
+        sortie=nom+popr+numero
+        return sortie
+
+    #Obtenir phrase: OK
+    def obtentionGroupeNominal(text):
+        doc1=nlp(text)
+        phrases={}
+        for np in doc1.noun_chunks:
+            phrase =np.text
+            nbrePhrases = len(phrase.split())#nombre de caractères des phrases nominales
+            if nbrePhrases > 1:
+                if phrase not in phrases:
+                    phrases[phrase]=1
+                else:
+                    phrases[phrase]=phrases[phrase]+1
+
+        cle_phrase=list(phrases.keys())#liste des clés du dictionnaire
+        cle_phrase=cle_phrase[:40]
+        return cle_phrase
+    #obtenir MotCles clés
+def TotalMotsCles(texte):
+    MotCles=Modification.obtentionGroupeNominal(texte)+Modification.listeReponses(texte)
+    return MotCles
+
+def accord(texte):#ok
+    MotsCles=TotalMotsCles(texte)
     phrase=tokenisation_des_phrases(texte)
     m=len(phrase)
     for j in range(m):
         sentence=(phrase[j])
-        doc7=nlp(sentence)
-        for token3 in doc7:
-            if token3.text in mots and token3.pos_=="PROPN" and token3.dep_=="flat:name" and token3.is_stop==False:#Pour obtenir le deuxième mot comme résultat
-                for tok3 in doc7:
-                    if tok3.text in mots and tok3.pos_=="VERB" and tok3.dep_=="ROOT":
-                        for toke3 in doc7:
-                            if toke3.text in mots and toke3.pos_=="NOUN" and toke3.dep_=="nsubj:pass":
-                                for tokes3 in doc7:
-                                    if tokes3.pos_=="AUX" and tokes3.dep_=="aux:pass":
-                                        return "ou s'"+tokes3.text+" "+tok3.text+" "+toke3.text+" ?\n réponse: "+token3.text#lieu propre
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            for token18 in doc17:
+                 for token19 in doc17:
+                    question1={}
+                    question2={}
+                    try:
+                        while token17.pos_=="NOUN" and token17.text in MotsCles and token17.dep_=="obj" and token18.pos_=="VERB" and token18.dep_=="acl" and token19.pos_=="PROPN" and token19.text in MotsCles:
+                                        phrase1=sentence.split(token19.text)
+                                        phrase1_=phrase1[0]+token19.text
+                                        question1['accord']="Qu'est ce qu'ils ont "+token18.text+" "+phrase1_+" ?"
+                                        question1['Réponse']="Le/La/Les "+token17.text
+                                        return question1
+                    except:
+                        print("planté")
+                       
+                        
 
-def complement_du_nom(texte):
-    mots=nettoyage_mots_frequent(texte)
+def questionLieu1(texte):#ok
+    MotsCles=TotalMotsCles(texte)
     phrase=tokenisation_des_phrases(texte)
     m=len(phrase)
     for j in range(m):
         sentence=(phrase[j])
-        doc7=nlp(sentence)
-        for token4 in doc7:
-            if token4.text in mots and token4.pos_=="PROPN" and token4.dep_=="nmod" and token4.is_stop==False:
-                for entite in doc7:
-                    if entite.pos=="NOUN" and entite.dep_=="obl:arg":#nom employé comme lieu"
-                        questions="Quel "+entite.text+"\nréponse:"+" "+token4.text
-                        return questions
-
-def questions_temps(texte):
-    mots=nettoyage_mots_frequent(texte)
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            for token3 in doc17:
+                question={}
+                try:
+                    while token17.pos_=="PROPN" and token17.text in MotsCles and token17.dep_=="flat:name" and token3.pos_=="PROPN" and token3.dep_=="obl:mod" and token3.text in MotsCles:
+                        phrase1=sentence.split(token3.text)
+                        phrase1_=phrase1[0]
+                        question['Lieu']="Ou est ce que "+phrase1_+" ?"
+                        question['Réponse']="A "+token3.text+" "+token17.text
+                        return question
+                except:
+                    print("Pas de question lié à la date")
+def questionLieu2(sentes):#OK
+    MotClesCles=TotalMotsCles(sentes)
+    phrase=tokenisation_des_phrases(sentes)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        Questions={}
+        doc3=nlp(sentence)
+        for token3 in doc3:
+            try:
+                if token3.pos_=="PROPN" and token3.dep_=="obl:mod" and token3.text in MotClesCles and token3.text in sentence:
+                    phrase2=sentence.split(token3.text)
+                    phrase1=phrase2[0]
+                    Questions['lieu']="Ou est ce que "+phrase1+" ?"
+                    Questions['réponse']="A "+token3.text
+                    return Questions
+            except:
+                Questions="pas de question"
+                return Questions
+                            
+def sujet_passe(texte):#OK
+    MotCles=TotalMotsCles(texte)
     phrase=tokenisation_des_phrases(texte)
     m=len(phrase)
     for j in range(m):
         sentence=(phrase[j])
-        doc7=nlp(sentence)
-        for temps in doc7:
-            if temps.text in mots and temps.pos_=="NOUN" and temps.dep_=="obl:mod" and temps.is_stop==False:#CCT avec mois
-                for nombre in doc7:
-                        if nombre.text in mots and nombre.pos_=="NUM" and nombre.dep_=="nummod":
-                            for nomSujet in doc7:
-                                if nomSujet.text in mots and nomSujet.pos_=="NOUN" and nomSujet.dep_=="nsubj:pass":
-                                    for avoirConjugue in doc7:     
-                                        if  avoirConjugue.pos_=="AUX" and avoirConjugue.dep_=="aux:tense":
-                                            for pPasse in doc7:
-                                                if pPasse.pos_=="VERB" and pPasse.dep=="acl:relcl":
-                                                    for preposition in doc7:
-                                                        if preposition.pos=="ADP" and preposition.dep_=="case":
-                                                            return "Quant est ce que"+" "+nombre.text+" "+nomSujet.text+""+avoirConjugue.text+" "+pPasse.text+" "+preposition.text+" ?"+"\n réponse: "+temps.text
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question:dict
+        reponse:dict
+        for nomSujet in doc6:
+            try:
+                while nomSujet.pos_=="NOUN" and nomSujet.text in MotCles and nomSujet.dep_=="nsubj:pass":
+                    phrase2=sentence.split(nomSujet.text)
+                    phrase2_=phrase2[1]
+                    question="Qui "+phrase2_+" ?"
+                    question=nomSujet.text
+                    return (question,reponse)
+            except:
+                    print("aucune correspondance")             
 
-def sujet_passe(texte):
-    mots=nettoyage_mots_frequent(texte)
+def questionTempsDate(texte):#ok
+    MotsCles=TotalMotsCles(texte)
     phrase=tokenisation_des_phrases(texte)
     m=len(phrase)
     for j in range(m):
         sentence=(phrase[j])
-        doc7=nlp(sentence)
-        for nomSujet in doc7:
-            if nomSujet.text in mots and nomSujet.pos_=="NOUN" and nomSujet.dep_=="nsubj:pass" and nomSujet.is_stop==False:
-                for tok in doc7:
-                            if tok.text in mots and tok.pos_=="" and tok.dep_=="":
-                                for toke in doc7:
-                                    if toke.text in mots and toke.pos_=="" and toke.dep_=="":
-                                        return print("")
-def questions(texte):
-    mots=nettoyage_mots_frequent(texte)
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question:string
+            reponse:string
+            try:
+                while token17.pos_=="NUM" and token17.text in MotsCles and token17.dep_=="nmod":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question="Quant est ce que "+phrase1_+" ?"
+                                reponse="En "+token17.text
+                                
+                                return (question,reponse)
+            except:
+                print("Pas de question lié à la date")
+                question="Aucune question trouvée"
+                return question
+
+def questionTempsMois(texte):#ok
+    MotsCles=TotalMotsCles(texte)
     phrase=tokenisation_des_phrases(texte)
     m=len(phrase)
     for j in range(m):
         sentence=(phrase[j])
-        doc7=nlp(sentence)
-        for token7 in doc7:
-            if token7.text in mots and token7.pos_=="NOUN" and token7.dep_=="nmod" and token7.is_stop==False:#COI
-                return print("")
+        doc18=nlp(sentence)
+        question:string
+        reponse:string
+        for token18 in doc18:
+            try:
+                if token18.pos_=="NOUN" and token18.text in MotsCles and token18.dep_=="obl:mod":
+                                phrase2=sentence.split(token18.text)
+                                phrase2_=phrase2[1]
+                                question="En quel moi de "+phrase2_+" ?" 
+                                reponse="En "+token18.text
+                                return (question,reponse)
+            except:
+                question="pas de question lié au mois"
+                return question
 
-        for token8 in doc7:
-            if token8.text in mots and token8.pos_=="NOUN" and token8.dep_=="obl:mod" and token8.is_stop==False:#COD
-                return print("")
+def complementDuNom(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            for token18 in doc17:
+                question={}
+                try:
+                    if token17.pos_=="NOUN" and token17.text in MotsCles and token17.dep_=="nmod" and token18.pos_=="NOUN" and token18.dep_=="nsubj:pass":
+                                    question['DATE']="Quel "+token18.text+" ?"
+                                    question['Réponse']="de "+token17.text
+                                    
+                                    return question
+                except:
+                    print("Pas de question lié à la date")
 
-        for token9 in doc7:
-            if token9.text in mots and token9.pos_=="NOUN" and token9.dep_=="obl:mod" and token9.is_stop==False:#CCT
-                return print("")
+def cOS(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            for token18 in doc17:
+                question={}
+                try:
+                    if token17.pos_=="PROPN" and token17.text in MotsCles and token17.dep_=="nmod" and token18.text in MotsCles and token18.pos_=="NOUN" and token18.dep_=="nmod":
+                                    question['DATE']=token18.text+" de quoi "+" ?"
+                                    question['Réponse']="(De /D') "+token17.text
+                                    return question
+                except:
+                    print("Pas de question lié à la date")
 
-        for token10 in doc7:
-            if token10.text in mots and token10.pos_=="NOUN" and token10.dep_=="root" and token10.is_stop==False:
-                return print("")#commplément du nom
-        for token10 in doc7:
-            if token10.text in mots and token10.pos_=="NOUN" and token10.dep_=="obj" and token10.is_stop==False:#COD
-                return print("")
-        for token11 in doc7:
-            if token11.text in mots and token11.pos_=="VERB" and token11.dep_=="acl:relcl" and token11.is_stop==False:#participe passé employé comme adjectif qualificatif attribut
-                return print("")
-        for token12 in doc7:
-            if token12.text in mots and token12.pos_=="VERB" and token12.dep_=="root" and token12.is_stop==False:#verbe pronominal
-                return print("")
-            
-        for token13 in doc7:
-            if token13.text in mots and token13.pos_=="VERB" and token13.dep_=="acl" and token13.is_stop==False:#Verb à l'infinitif
-                return print("")
+def nombreSujet(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+                if nomSujet.pos_=="NUM" and nomSujet.text in MotCles and nomSujet.dep_=="nummod":
+                    try:
+                                        
+                        phrase2=sentence.split(nomSujet.text)
+                        phrase2_=phrase2[1]
+                        question['personne']="Combien de "+phrase2_+" ?" 
+                        question['Réponse']=nomSujet.text
+                        return question
+                    except:
+                            question['personne']="Qui "+phrase2_+" ?"
+                            question['Réponse']="Aucune personne liée !"
+                            return question
 
-        for token14 in doc7:
-            if token14.text in mots and token14.pos_=="VERB" and token14.dep_=="acl" and token14.is_stop==False:#participe présent
-                return print("")
+def coordination(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question={}
+            try:
+                if token17.pos_=="PROPN" and token17.text in MotsCles and token17.dep_=="conj":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question['DATE']="Quel "+phrase1_+" ?"
+                                question['Réponse']="En "+token17.text
+                                
+                                return question
+            except:
+                print("Pas de question lié à la date")
 
-        for token15 in doc7:
-            if token15.text in mots and token15.pos_=="ADJ" and token15.dep_=="amod" and token15.is_stop==False:#épithète du nom
-                return print("")
+def Maniere(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question={}
+            try:
+                if token17.pos_=="NOUN" and token17.text in MotsCles and token17.dep_=="conj":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question['DATE']="Comment est ce que "+phrase1_+" ?"
+                                question['Réponse']="En "+token17.text
+                                
+                                return question
+            except:
+                print("Pas de question lié à la date")
 
-        for token16 in doc7:
-            if token16.text in mots and token16.pos_=="ADJ" and token16.dep_=="amod" and token16.is_stop==False:
-                return print("")
+def X(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question={}
+            try:
+                if token17.pos_=="NOUN" and token17.text in MotsCles and token17.dep_=="amod":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question['DATE']="Quant est ce que "+phrase1_+" ?"
+                                question['Réponse']="En "+token17.text
+                                
+                                return question
+            except:
+                print("Pas de question lié à la date")
 
-        for token17 in doc7:
-            if token17.text in mots and token17.pos_=="NUM" and token17.dep_=="nmod" and token17.is_stop==False:#CCT avec année
-                return print("")
+def A(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question={}
+            try:
+                if token17.pos_=="NOUN" and token17.text in MotsCles and token17.dep_=="obl:arg":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question['DATE']="Quant est ce que "+phrase1_+" ?"
+                                question['Réponse']="En "+token17.text
+                                
+                                return question
+            except:
+                print("Pas de question lié à la date")
 
-        for token18 in doc7:
-            if token18.text in mots and token18.pos_=="CCONJ" and token18.dep_=="" and token18.is_stop==False:
-                return print("")
+def motif(texte):#ok
+    MotsCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc17=nlp(sentence)
+        for token17 in doc17:
+            question={}
+            try:
+                if token17.pos_=="PROPN" and token17.text in MotsCles and token17.dep_=="obl:arg":
+                                phrase1=sentence.split(token17.text)
+                                phrase1_=phrase1[1]
+                                question['DATE']="Quant est ce que "+phrase1_+" ?"
+                                question['Réponse']="En "+token17.text
+                                
+                                return question
+            except:
+                print("Pas de question lié à la date")
 
-        for token19 in doc7:
-            if token19.text in mots and token19.pos_=="" and token19.dep_=="" and token19.is_stop==False:
-                return print("")
-        for token20 in doc7:
-            if token20.text in mots and token20.pos_=="" and token20.dep_=="" and token20.is_stop==False:
-                return print("")
+def nomSujet(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+                if nomSujet.pos_=="NOUN" and nomSujet.text in MotCles and nomSujet.dep_=="nsubj":
+                    try:
+                                        
+                        phrase2=sentence.split(nomSujet.text)
+                        phrase2_=phrase2[1]
+                        question['personne']="Qui "+phrase2_+" ?" 
+                        question['Réponse']=nomSujet.text
+                        return question
+                    except:
+                            question['personne']="Qui "+phrase2_+" ?"
+                            question['Réponse']="Aucune personne liée !"
+                            return question
 
-        for token21 in doc7:
-            if token21.text in mots and token21.pos_=="" and token21.dep_=="" and token21.is_stop==False:
-                return print("")
+def nS(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+                if nomSujet.pos_=="NUM" and nomSujet.text in MotCles and nomSujet.dep_=="nsubj":
+                    try:
+                                        
+                        phrase2=sentence.split(nomSujet.text)
+                        phrase2_=phrase2[1]
+                        question['personne']="Qui "+phrase2_+" ?" 
+                        question['Réponse']=nomSujet.text
+                        return question
+                    except:
+                            question['personne']="Qui "+phrase2_+" ?"
+                            question['Réponse']="Aucune personne liée !"
+                            return question   
+
+def sujetPrecis(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+            try:   
+                if nomSujet.pos_=="PROPN" and nomSujet.text in MotCles and nomSujet.dep_=="fixed":     
+                    phrase2=sentence.split(nomSujet.text)
+                    phrase2_=phrase2[1]
+                    question['personne']="Qui "+phrase2_+" ?" 
+                    question['Réponse']=nomSujet.text
+                    return question
+            except:
+                        print("pas de question trouvé")
+
+def nS5(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+                if nomSujet.pos_=="NOUN" and nomSujet.text in MotCles and nomSujet.dep_=="fixed":
+                    try:
+                                        
+                        phrase2=sentence.split(nomSujet.text)
+                        phrase2_=phrase2[1]
+                        question['personne']="Qui "+phrase2_+" ?" 
+                        question['Réponse']=nomSujet.text
+                        return question
+                    except:
+                            question['personne']="Qui "+phrase2_+" ?"
+                            question['Réponse']="Aucune personne liée !"
+                            return question
+
+def nS8(texte):#OK
+    MotCles=TotalMotsCles(texte)
+    phrase=tokenisation_des_phrases(texte)
+    m=len(phrase)
+    for j in range(m):
+        sentence=(phrase[j])
+        doc6=nlp(sentence)
+        tokens=word_tokenize(sentence)
+        n=len(tokens)
+        question={}
+        for nomSujet in doc6:
+                if nomSujet.pos_=="NOUN" and nomSujet.text in MotCles and nomSujet.dep_=="obl:agent":
+                    try:
+                                        
+                        phrase2=sentence.split(nomSujet.text)
+                        phrase2_=phrase2[1]
+                        question['personne']="Qui "+phrase2_+" ?" 
+                        question['Réponse']=nomSujet.text
+                        return question
+                    except:
+                            question['personne']="Qui "+phrase2_+" ?"
+                            question['Réponse']="Aucune personne liée !"
+                            return question
+texte1=open("texte1.txt","+r",encoding="utf-8")
+text1=texte1.read()
+texte2=open("texte2.txt","+r",encoding="utf-8")
+text2=texte2.read()
+print("token",accord(text1))
+

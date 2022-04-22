@@ -1,4 +1,12 @@
-import extraction_questions
+
+from nltk import word_tokenize,sent_tokenize
+from nltk.corpus import stopwords
+import spacy
+import pke
+import string
+nlp=spacy.load("fr_core_news_sm")
+stopWords = set(stopwords.words('french'))
 text1=open("texte1.txt","r+",encoding="utf_8")
-text2=text1.read()
-print("temps",extraction_questions.extraction_questions(text2))
+texte1=text1.read()
+text2=open("texte2.txt","r+",encoding="utf_8")
+texte2=text2.read()

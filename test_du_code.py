@@ -1,12 +1,51 @@
-
-from nltk import word_tokenize,sent_tokenize
-from nltk.corpus import stopwords
-import spacy
-import pke
-import string
-nlp=spacy.load("fr_core_news_sm")
-stopWords = set(stopwords.words('french'))
-text1=open("texte1.txt","r+",encoding="utf_8")
+import extraction_questionsGN
+import extraction_questionsMAM
+text1=open("TEXTES/texte1.txt","r+",encoding="utf_8")
 texte1=text1.read()
-text2=open("texte2.txt","r+",encoding="utf_8")
+text2=open("TEXTES/texte2.txt","r+",encoding="utf_8")
 texte2=text2.read()
+
+#test du système sur le texte1
+entites_nommees=extraction_questionsGN.entiteesNommees(texte1)
+groupe_nominaux=extraction_questionsGN.groupeNominal(texte1)
+accord= extraction_questionsMAM.ExtractionQuestionsReponses.accord(texte1)
+questionLieu1=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu1(texte1)
+questionLieu2=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu2(texte1)
+sujet_passe=extraction_questionsMAM.ExtractionQuestionsReponses.sujet_passe(texte1)
+questionTempsDate=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsDate(texte1)
+questionTempsMois=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsMois(texte1)
+complementDuNom=extraction_questionsMAM.ExtractionQuestionsReponses.complementDuNom(texte1)
+cOS=extraction_questionsMAM.ExtractionQuestionsReponses.cOS(texte1)
+nombreSujet=extraction_questionsMAM.ExtractionQuestionsReponses.nombreSujet(texte1)
+coordination=extraction_questionsMAM.ExtractionQuestionsReponses.coordination(texte1)
+Manière=extraction_questionsMAM.ExtractionQuestionsReponses.Maniere(texte1)
+X=extraction_questionsMAM.ExtractionQuestionsReponses.X(texte1)
+A=extraction_questionsMAM.ExtractionQuestionsReponses.A(texte1)
+motif=extraction_questionsMAM.ExtractionQuestionsReponses.motif(texte1)
+nomSujet=extraction_questionsMAM.ExtractionQuestionsReponses.nomSujet(texte1)
+sujetPrecis=extraction_questionsMAM.ExtractionQuestionsReponses.sujetPrecis(texte1)
+totalQ1=extraction_questionsGN.entiteesNommees(texte1)|extraction_questionsGN.entiteesNommees(texte1)
+
+print("questions et réponses générées pour le texte1\n",totalQ1)
+#test du système sur le texte2
+entites_nommees2=extraction_questionsGN.entiteesNommees(texte2)
+groupe_nominaux2=extraction_questionsGN.groupeNominal(texte2)
+accord2= extraction_questionsMAM.ExtractionQuestionsReponses.accord(texte2)
+questionLieu12=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu1(texte2)
+questionLieu22=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu2(texte2)
+sujet_passe2=extraction_questionsMAM.ExtractionQuestionsReponses.sujet_passe(texte2)
+questionTempsDate2=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsDate(texte2)
+questionTempsMois2=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsMois(texte2)
+complementDuNom2=extraction_questionsMAM.ExtractionQuestionsReponses.complementDuNom(texte2)
+cOS2=extraction_questionsMAM.ExtractionQuestionsReponses.cOS(texte2)
+nombreSujet2=extraction_questionsMAM.ExtractionQuestionsReponses.nombreSujet(texte2)
+coordination2=extraction_questionsMAM.ExtractionQuestionsReponses.coordination(texte2)
+Manière2=extraction_questionsMAM.ExtractionQuestionsReponses.Maniere(texte2)
+X2=extraction_questionsMAM.ExtractionQuestionsReponses.X(texte2)
+A2=extraction_questionsMAM.ExtractionQuestionsReponses.A(texte2)
+motif2=extraction_questionsMAM.ExtractionQuestionsReponses.motif(texte2)
+nomSujet2=extraction_questionsMAM.ExtractionQuestionsReponses.nomSujet(texte2)
+sujetPrecis2=extraction_questionsMAM.ExtractionQuestionsReponses.sujetPrecis(texte2)
+
+totalQ2=entites_nommees2|groupe_nominaux2|accord2|questionLieu12|questionLieu22|sujet_passe2|questionTempsDate2|questionTempsMois2|complementDuNom2|cOS2|nombreSujet2|coordination2|Manière2|X2|A2|motif2|nomSujet2|sujetPrecis2
+print("questions et réponses générées pour le texte1\n",totalQ2)

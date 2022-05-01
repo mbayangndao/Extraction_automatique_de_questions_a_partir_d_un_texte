@@ -1,51 +1,72 @@
-import extraction_questionsGN
-import extraction_questionsMAM
+from extraction_questionsGN import *
+from extraction_questionsMAM import *
+
+from os import chdir
 text1=open("TEXTES/texte1.txt","r+",encoding="utf_8")
 texte1=text1.read()
 text2=open("TEXTES/texte2.txt","r+",encoding="utf_8")
 texte2=text2.read()
+chdir("C:/Users/debbo/Documents/SEMESTRE 4")
+text3=open("test3.txt","r+",encoding="utf_8")
+texte3=text3.read()
 
 #test du système sur le texte1
-entites_nommees=extraction_questionsGN.entiteesNommees(texte1)
-groupe_nominaux=extraction_questionsGN.groupeNominal(texte1)
-accord= extraction_questionsMAM.ExtractionQuestionsReponses.accord(texte1)
-questionLieu1=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu1(texte1)
-questionLieu2=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu2(texte1)
-sujet_passe=extraction_questionsMAM.ExtractionQuestionsReponses.sujet_passe(texte1)
-questionTempsDate=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsDate(texte1)
-questionTempsMois=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsMois(texte1)
-complementDuNom=extraction_questionsMAM.ExtractionQuestionsReponses.complementDuNom(texte1)
-cOS=extraction_questionsMAM.ExtractionQuestionsReponses.cOS(texte1)
-nombreSujet=extraction_questionsMAM.ExtractionQuestionsReponses.nombreSujet(texte1)
-coordination=extraction_questionsMAM.ExtractionQuestionsReponses.coordination(texte1)
-Manière=extraction_questionsMAM.ExtractionQuestionsReponses.Maniere(texte1)
-X=extraction_questionsMAM.ExtractionQuestionsReponses.X(texte1)
-A=extraction_questionsMAM.ExtractionQuestionsReponses.A(texte1)
-motif=extraction_questionsMAM.ExtractionQuestionsReponses.motif(texte1)
-nomSujet=extraction_questionsMAM.ExtractionQuestionsReponses.nomSujet(texte1)
-sujetPrecis=extraction_questionsMAM.ExtractionQuestionsReponses.sujetPrecis(texte1)
-totalQ1=extraction_questionsGN.entiteesNommees(texte1)|extraction_questionsGN.entiteesNommees(texte1)
 
-print("questions et réponses générées pour le texte1\n",totalQ1)
+entites_nommees=GNT(texte1)
+n=len(entites_nommees)
+for j in range(n):
+    print("question NERT possible",entites_nommees[j])
+
+accord= ExtractionQuestionsReponses.accord(texte1)
+print("accord",accord)
+questionLieu1=ExtractionQuestionsReponses.questionLieu1(texte1)
+questionLieu2=ExtractionQuestionsReponses.questionLieu2(texte1)
+sujet_passe=ExtractionQuestionsReponses.sujet_passe(texte1)
+questionTempsDate=ExtractionQuestionsReponses.questionTempsDate(texte1)
+questionTempsMois=ExtractionQuestionsReponses.questionTempsMois(texte1)
+complementDuNom=ExtractionQuestionsReponses.complementDuNom(texte1)
+cOS=ExtractionQuestionsReponses.cOS(texte1)
+nombreSujet=ExtractionQuestionsReponses.nombreSujet(texte1)
+coordination=ExtractionQuestionsReponses.coordination(texte1)
+Manière=ExtractionQuestionsReponses.Maniere(texte1)
+X=ExtractionQuestionsReponses.X(texte1)
+A=ExtractionQuestionsReponses.A(texte1)
+motif=ExtractionQuestionsReponses.motif(texte1)
+nomSujet=ExtractionQuestionsReponses.nomSujet(texte1)
+sujetPrecis=ExtractionQuestionsReponses.sujetPrecis(texte1)
+
+
+
+    
+
+
 #test du système sur le texte2
-entites_nommees2=extraction_questionsGN.entiteesNommees(texte2)
-groupe_nominaux2=extraction_questionsGN.groupeNominal(texte2)
-accord2= extraction_questionsMAM.ExtractionQuestionsReponses.accord(texte2)
-questionLieu12=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu1(texte2)
-questionLieu22=extraction_questionsMAM.ExtractionQuestionsReponses.questionLieu2(texte2)
-sujet_passe2=extraction_questionsMAM.ExtractionQuestionsReponses.sujet_passe(texte2)
-questionTempsDate2=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsDate(texte2)
-questionTempsMois2=extraction_questionsMAM.ExtractionQuestionsReponses.questionTempsMois(texte2)
-complementDuNom2=extraction_questionsMAM.ExtractionQuestionsReponses.complementDuNom(texte2)
-cOS2=extraction_questionsMAM.ExtractionQuestionsReponses.cOS(texte2)
-nombreSujet2=extraction_questionsMAM.ExtractionQuestionsReponses.nombreSujet(texte2)
-coordination2=extraction_questionsMAM.ExtractionQuestionsReponses.coordination(texte2)
-Manière2=extraction_questionsMAM.ExtractionQuestionsReponses.Maniere(texte2)
-X2=extraction_questionsMAM.ExtractionQuestionsReponses.X(texte2)
-A2=extraction_questionsMAM.ExtractionQuestionsReponses.A(texte2)
-motif2=extraction_questionsMAM.ExtractionQuestionsReponses.motif(texte2)
-nomSujet2=extraction_questionsMAM.ExtractionQuestionsReponses.nomSujet(texte2)
-sujetPrecis2=extraction_questionsMAM.ExtractionQuestionsReponses.sujetPrecis(texte2)
+groupe_nominaux2=GNT(texte2)
+p=len(groupe_nominaux2)
+for k in range(p):
+    print("question GNT possible",groupe_nominaux2[k])
 
-totalQ2=entites_nommees2|groupe_nominaux2|accord2|questionLieu12|questionLieu22|sujet_passe2|questionTempsDate2|questionTempsMois2|complementDuNom2|cOS2|nombreSujet2|coordination2|Manière2|X2|A2|motif2|nomSujet2|sujetPrecis2
-print("questions et réponses générées pour le texte1\n",totalQ2)
+entites_nommees2=ExtractionQuestionsReponses.NERT(texte2)
+q=len(entites_nommees2)
+for l in range(q):
+    print("question NERT possible",entites_nommees2[l])
+accord2= ExtractionQuestionsReponses.accord(texte2)
+questionLieu12=ExtractionQuestionsReponses.questionLieu1(texte2)
+questionLieu22=ExtractionQuestionsReponses.questionLieu2(texte2)
+sujet_passe2=ExtractionQuestionsReponses.sujet_passe(texte2)
+questionTempsDate2=ExtractionQuestionsReponses.questionTempsDate(texte2)
+questionTempsMois2=ExtractionQuestionsReponses.questionTempsMois(texte2)
+complementDuNom2=ExtractionQuestionsReponses.complementDuNom(texte2)
+cOS2=ExtractionQuestionsReponses.cOS(texte2)
+nombreSujet2=ExtractionQuestionsReponses.nombreSujet(texte2)
+coordination2=ExtractionQuestionsReponses.coordination(texte2)
+Manière2=ExtractionQuestionsReponses.Maniere(texte2)
+X2=ExtractionQuestionsReponses.X(texte2)
+A2=ExtractionQuestionsReponses.A(texte2)
+motif2=ExtractionQuestionsReponses.motif(texte2)
+nomSujet2=ExtractionQuestionsReponses.nomSujet(texte2)
+sujetPrecis2=ExtractionQuestionsReponses.sujetPrecis(texte2)
+from spacy import displacy
+ 
+doc = nlp(texte1)
+displacy.serve(doc, style="dep")

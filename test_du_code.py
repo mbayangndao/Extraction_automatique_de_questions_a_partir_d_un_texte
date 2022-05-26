@@ -1,6 +1,6 @@
 from extraction_questionsGN import *
 from extraction_questionsMAM import *
-
+import unittest
 from os import chdir
 text1=open("TEXTES/texte1.txt","r+",encoding="utf_8")
 texte1=text1.read()
@@ -46,7 +46,7 @@ p=len(groupe_nominaux2)
 for k in range(p):
     print("question GNT possible",groupe_nominaux2[k])
 
-entites_nommees2=ExtractionQuestionsReponses.NERT(texte2)
+entites_nommees2=NER(texte2)
 q=len(entites_nommees2)
 for l in range(q):
     print("question NERT possible",entites_nommees2[l])
@@ -66,7 +66,4 @@ A2=ExtractionQuestionsReponses.A(texte2)
 motif2=ExtractionQuestionsReponses.motif(texte2)
 nomSujet2=ExtractionQuestionsReponses.nomSujet(texte2)
 sujetPrecis2=ExtractionQuestionsReponses.sujetPrecis(texte2)
-from spacy import displacy
- 
-doc = nlp(texte1)
-displacy.serve(doc, style="dep")
+
